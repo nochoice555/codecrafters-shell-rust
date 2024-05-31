@@ -1,4 +1,4 @@
-use std::{io::Error, str::FromStr};
+use std::str::FromStr;
 use std::{
     io::{self, Write},
     process::exit,
@@ -8,16 +8,20 @@ use std::{
 enum Commands {
     Exit,
     Echo,
-    NotFound,
+    Type,
 }
 
+#[derive(Debug)]
+struct CommandsError;
+
 impl FromStr for Commands {
-    type Err = Error;
+    type Err = CommandsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "exit" => Ok(Self::Exit),
             "echo" => Ok(Self::Echo),
-            _ => Ok(Self::NotFound),
+            "type" => Ok(Self::Type),
+            _ => Err(CommandsError),
         }
     }
 }
@@ -37,9 +41,12 @@ fn main() {
                 Ok(cmd_parsed) => match cmd_parsed {
                     Commands::Exit => exit(commands[1].parse().unwrap_or(0)),
                     Commands::Echo => println!("{}", commands[1..].join(" ")),
-                    Commands::NotFound => println!("{}: command not found", cmd),
-                }
-                Err(e) => println!("error - {}", e),
+                    Commands::Type => match commands[1].parse::<Commands>() {
+                        Ok(_) => println!("{} is a shell builtin", commands[1]),
+                        Err(_) => println!("{} not found", commands[1]),
+                    },
+                },
+                Err(_) => println!("{}: command not found", cmd),
             },
             _ => println!("command match error"),
         }
