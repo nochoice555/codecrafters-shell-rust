@@ -1,4 +1,5 @@
-use std::str::FromStr;
+use env::var;
+use std::{env, fs::metadata, str::FromStr};
 use std::{
     io::{self, Write},
     process::exit,
@@ -41,10 +42,7 @@ fn main() {
                 Ok(cmd_parsed) => match cmd_parsed {
                     Commands::Exit => exit(commands[1].parse().unwrap_or(0)),
                     Commands::Echo => println!("{}", commands[1..].join(" ")),
-                    Commands::Type => match commands[1].parse::<Commands>() {
-                        Ok(_) => println!("{} is a shell builtin", commands[1]),
-                        Err(_) => println!("{} not found", commands[1]),
-                    },
+                    Commands::Type => find_type(commands[1]),
                 },
                 Err(_) => println!("{}: command not found", cmd),
             },
@@ -62,4 +60,19 @@ fn read_input_to_buff(input: &mut String) {
 
 fn parse_command(input: &str) -> Vec<&str> {
     input.trim().to_lowercase().leak().split(' ').collect()
+}
+
+fn find_type(command: &str) {
+    match command.parse::<Commands>() {
+        Ok(_) => println!("{} is a shell builtin", command),
+        Err(_) => match var("PATH")
+            .unwrap()
+            .split(":")
+            .map(|path| format!("{}/{}", path, command))
+            .find(|path| metadata(path).is_ok())
+        {
+            Some(path) => println!("{} is {}", command, path),
+            _ => println!("{} not found", command),
+        },
+    }
 }
