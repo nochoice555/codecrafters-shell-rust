@@ -13,6 +13,7 @@ enum Commands {
     Exit,
     Echo,
     Type,
+    Pwd,
 }
 
 #[derive(Debug)]
@@ -25,6 +26,7 @@ impl FromStr for Commands {
             "exit" => Ok(Self::Exit),
             "echo" => Ok(Self::Echo),
             "type" => Ok(Self::Type),
+            "pwd" => Ok(Self::Pwd),
             _ => Err(CommandsError),
         }
     }
@@ -45,6 +47,7 @@ fn main() {
                     Commands::Exit => exit(commands[1].parse().unwrap_or(0)),
                     Commands::Echo => println!("{}", commands[1..].join(" ")),
                     Commands::Type => find_type(commands[1]),
+                    Commands::Pwd => print_cur_dir(),
                 },
                 Err(_) => exec_path_or_not_found(&cmd, &commands),
             },
@@ -62,6 +65,11 @@ fn read_input_to_buff(input: &mut String) {
 
 fn parse_command(input: &str) -> Vec<&str> {
     input.trim().split(' ').collect()
+}
+
+fn print_cur_dir() {
+    let pwd = env::current_dir().unwrap();
+    println!("{}", pwd.display());
 }
 
 fn find_type(command: &str) {
