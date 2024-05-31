@@ -7,6 +7,7 @@ use std::{
 #[derive(Debug)]
 enum Commands {
     Exit,
+    Echo,
     NotFound,
 }
 
@@ -15,6 +16,7 @@ impl FromStr for Commands {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "exit" => Ok(Self::Exit),
+            "echo" => Ok(Self::Echo),
             _ => Ok(Self::NotFound),
         }
     }
@@ -30,14 +32,15 @@ fn main() {
         let commands = parse_command(&mut input);
 
         match commands[..] {
-            [cmd, code] => match cmd.parse() {
+            [cmd] => println!("{}: command not found", cmd),
+            [cmd, ..] => match cmd.parse() {
                 Ok(cmd_parsed) => match cmd_parsed {
-                    Commands::Exit => exit(code.parse().unwrap_or(0)),
+                    Commands::Exit => exit(commands[1].parse().unwrap_or(0)),
+                    Commands::Echo => println!("{}", commands[1..].join(" ")),
                     Commands::NotFound => println!("{}: command not found", cmd),
                 }
                 Err(e) => println!("error - {}", e),
             },
-            [cmd] => println!("{}: command not found", cmd),
             _ => println!("command match error"),
         }
     }
