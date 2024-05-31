@@ -1,8 +1,11 @@
 use env::var;
-use std::{env, fs::metadata, str::FromStr};
 use std::{
+    env,
+    fs::metadata,
     io::{self, Write},
-    process::exit,
+    path::Path,
+    process::{exit, Command},
+    str::FromStr,
 };
 
 #[derive(Debug)]
@@ -37,14 +40,13 @@ fn main() {
         let commands = parse_command(&mut input);
 
         match commands[..] {
-            [cmd] => println!("{}: command not found", cmd),
             [cmd, ..] => match cmd.parse() {
                 Ok(cmd_parsed) => match cmd_parsed {
                     Commands::Exit => exit(commands[1].parse().unwrap_or(0)),
                     Commands::Echo => println!("{}", commands[1..].join(" ")),
                     Commands::Type => find_type(commands[1]),
                 },
-                Err(_) => println!("{}: command not found", cmd),
+                Err(_) => exec_path_or_not_found(&cmd, &commands),
             },
             _ => println!("command match error"),
         }
@@ -59,7 +61,7 @@ fn read_input_to_buff(input: &mut String) {
 }
 
 fn parse_command(input: &str) -> Vec<&str> {
-    input.trim().to_lowercase().leak().split(' ').collect()
+    input.trim().split(' ').collect()
 }
 
 fn find_type(command: &str) {
@@ -74,5 +76,20 @@ fn find_type(command: &str) {
             Some(path) => println!("{} is {}", command, path),
             _ => println!("{} not found", command),
         },
+    }
+}
+
+fn exec_path_or_not_found(cmd: &str, commands: &Vec<&str>) {
+    let binding = var("PATH").unwrap();
+    let paths: Vec<&str> = binding.split(":").collect();
+    let cmd_path = Path::new(&paths[0]).join(cmd);
+
+    if cmd_path.exists() {
+        Command::new(cmd_path)
+            .args(&commands[1..])
+            .status()
+            .expect("Failed to execute process");
+    } else {
+        println!("{}: command not found", cmd)
     }
 }
