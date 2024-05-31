@@ -4,6 +4,7 @@ use std::{
     process::exit,
 };
 
+#[derive(Debug)]
 enum Commands {
     Exit,
     NotFound,
@@ -20,20 +21,24 @@ impl FromStr for Commands {
 }
 
 fn main() {
-    print!("$ ");
-
     loop {
+        print!("$ ");
+
         let mut input = String::new();
         read_input_to_buff(&mut input);
 
-        let [command, code] = parse_command(&mut input)[..] else {return;};
-        
-        match command.parse() {
-            Ok(cmd) => match cmd {
-                Commands::Exit => exit(code.parse().unwrap_or(0)),
-                Commands::NotFound => println!("{}: command not found", input),
+        let commands = parse_command(&mut input);
+
+        match commands[..] {
+            [cmd, code] => match cmd.parse() {
+                Ok(cmd_parsed) => match cmd_parsed {
+                    Commands::Exit => exit(code.parse().unwrap_or(0)),
+                    Commands::NotFound => println!("{}: command not found", cmd),
+                }
+                Err(e) => println!("error - {}", e),
             },
-            Err(e) => println!("{}", e),
+            [cmd] => println!("{}: command not found", cmd),
+            _ => println!("command match error"),
         }
     }
 }
