@@ -106,7 +106,12 @@ fn exec_path_or_not_found(cmd: &str, commands: &Vec<&str>) {
 }
 
 fn cd_dir(args: &str) {
-    let new_path = Path::new(args);
+    let new_arg = match args {
+        "~" => var("HOME").unwrap_or("HOME".to_string()),
+        _ => args.to_string(),
+    };
+    let new_path = Path::new(&new_arg);
+
     if env::set_current_dir(new_path).is_err() {
         println!("{}: No such file or directory", args)
     }
