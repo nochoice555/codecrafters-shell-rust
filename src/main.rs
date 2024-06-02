@@ -14,6 +14,7 @@ enum Commands {
     Echo,
     Type,
     Pwd,
+    Cd,
 }
 
 #[derive(Debug)]
@@ -27,6 +28,7 @@ impl FromStr for Commands {
             "echo" => Ok(Self::Echo),
             "type" => Ok(Self::Type),
             "pwd" => Ok(Self::Pwd),
+            "cd" => Ok(Self::Cd),
             _ => Err(CommandsError),
         }
     }
@@ -48,6 +50,7 @@ fn main() {
                     Commands::Echo => println!("{}", commands[1..].join(" ")),
                     Commands::Type => find_type(commands[1]),
                     Commands::Pwd => print_cur_dir(),
+                    Commands::Cd => cd_dir(&commands[1..].join(" ")),
                 },
                 Err(_) => exec_path_or_not_found(&cmd, &commands),
             },
@@ -99,5 +102,12 @@ fn exec_path_or_not_found(cmd: &str, commands: &Vec<&str>) {
             .expect("Failed to execute process");
     } else {
         println!("{}: command not found", cmd)
+    }
+}
+
+fn cd_dir(args: &str) {
+    let new_path = Path::new(args);
+    if env::set_current_dir(new_path).is_err() {
+        println!("{}: No such file or directory", args)
     }
 }
